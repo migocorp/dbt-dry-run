@@ -26,12 +26,22 @@ class ManifestScheduler:
         if self._model_filter is None:
             return set(self._manifest.nodes.keys())
         else:
+            models = self._model_filter.split(",")
+            models_checklist = models.copy()
             filtered_nodes = []
             for key in set(self._manifest.nodes.keys()):
-                if key.split(".")[0] == "model":
-                    if key.split(".")[2] in self._model_filter.split(","):
+                node_type, node_model = key.split(".")[0], key.split(".")[2]
+                if node_type == "model":
+                    if node_model in self._model_filter.split(","):
                         filtered_nodes.append(key)
-            return filtered_nodes
+                        try:
+                            models_checklist.remove(node_model)
+                        except:
+                            pass # model already remove from check list
+            if models_checklist == []:
+                return filtered_nodes
+            else:
+                raise ValueError(f"Unknown models: {models_checklist}")
 
     def _get_runnable_keys(self) -> Set[str]:
         remaining_nodes = set(
