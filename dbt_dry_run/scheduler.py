@@ -24,30 +24,14 @@ class ManifestScheduler:
 
     def _filter_manifest(self) -> Set[str]:
         if self._model_filter is None:
-            return set(self._manifest.all_nodes.keys())
-        try:
-            leaf_node = self._manifest.all_nodes[self._model_filter]
-        except KeyError:
-            raise KeyError(f"Model {self._model_filter} does not exist in manifest")
-        upstream_node_keys = leaf_node.depends_on.nodes
-        filtered_nodes = [self._model_filter, *upstream_node_keys]
-        while upstream_node_keys:
-            upstream_nodes = list(
-                filter(
-                    lambda val: val is not None,
-                    [self._manifest.all_nodes.get(k) for k in upstream_node_keys],
-                )
-            )
-            upstream_node_keys = list(
-                filter(
-                    lambda n: n in self._manifest.all_nodes.keys(),
-                    chain.from_iterable(
-                        [n.depends_on.nodes for n in upstream_nodes if n]
-                    ),
-                )
-            )
-            filtered_nodes.extend(upstream_node_keys)
-        return set(filtered_nodes)
+            return set(self._manifest.nodes.keys())
+        else:
+            filtered_nodes = []
+            for key in set(self._manifest.nodes.keys()):
+                if key.split(".")[0] == "model":
+                    if key.split(".")[2] in self._model_filter.split(","):
+                        filtered_nodes.append(key)
+            return filtered_nodes
 
     def _get_runnable_keys(self) -> Set[str]:
         remaining_nodes = set(
@@ -56,14 +40,6 @@ class ManifestScheduler:
 
         if self._model_filter:
             remaining_nodes = remaining_nodes.intersection(self._filter_manifest())
-            if self._model_filter not in remaining_nodes:
-                model_filter_config = self._manifest.all_nodes[
-                    self._model_filter
-                ].config
-                model_message = (
-                    f"Model {self._model_filter} is not runnable: {model_filter_config}"
-                )
-                raise KeyError(model_message)
         return remaining_nodes
 
     def __iter__(self) -> Iterator[List[Node]]:
