@@ -24,12 +24,12 @@ class ManifestScheduler:
 
     def _filter_manifest(self) -> Set[str]:
         if self._model_filter is None:
-            return set(self._manifest.nodes.keys())
+            return set(self._manifest.all_nodes.keys())
         else:
             models = self._model_filter.split(",")
             models_checklist = models.copy()
             filtered_nodes = []
-            for key in set(self._manifest.nodes.keys()):
+            for key in set(self._manifest.all_nodes.keys()):
                 node_type, node_model = key.split(".")[0], key.split(".")[2]
                 if node_type == "model":
                     if node_model in self._model_filter.split(","):
@@ -39,7 +39,7 @@ class ManifestScheduler:
                         except:
                             pass # model already remove from check list
             if models_checklist == []:
-                return filtered_nodes
+                return set(filtered_nodes)
             else:
                 raise ValueError(f"Unknown models: {models_checklist}")
 
