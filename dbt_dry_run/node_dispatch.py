@@ -10,6 +10,7 @@ from dbt_dry_run.node_runner.snapshot_runner import SnapshotRunner
 from dbt_dry_run.node_runner.source_runner import SourceRunner
 from dbt_dry_run.node_runner.table_runner import TableRunner
 from dbt_dry_run.node_runner.view_runner import ViewRunner
+from dbt_dry_run.node_runner.model_runner import ModelRunner
 from dbt_dry_run.results import DryRunResult
 
 
@@ -23,6 +24,7 @@ RUNNERS: Dict[RunnerKey, Type[NodeRunner]] = {
     RunnerKey("model", "incremental"): IncrementalRunner,
     RunnerKey("model", "table"): TableRunner,
     RunnerKey("model", "view"): ViewRunner,
+    RunnerKey("model", "model"): ModelRunner,
     RunnerKey("test", "test"): NodeTestRunner,
     RunnerKey("snapshot", "snapshot"): SnapshotRunner,
     RunnerKey("seed", "seed"): SeedRunner,
