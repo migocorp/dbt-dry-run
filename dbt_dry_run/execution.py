@@ -84,7 +84,7 @@ def validate_manifest_compatibility(manifest: Manifest) -> None:
         )
 
 
-def dry_run_manifest(project: ProjectService, tags: str) -> Results:
+def dry_run_manifest(project: ProjectService, tags: Optional[str]) -> Results:
     executor: ThreadPoolExecutor
     with create_context(project) as (sql_runner, executor):
         results = Results()

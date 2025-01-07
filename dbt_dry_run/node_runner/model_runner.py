@@ -6,6 +6,11 @@ from dbt_dry_run.results import DryRunResult, DryRunStatus
 
 
 class ModelRunner(NodeRunner):
+    """
+    Model 是第三方開發的 materialized type，用來建立 BQ 的 ML model
+    kristeligt-dagblad/dbt_ml(https://github.com/kristeligt-dagblad/dbt_ml)
+    """
+
     def _modify_sql(self, node: Node, sql_statement: str) -> str:
         if node.config.sql_header:
             sql_statement = f"{node.config.sql_header}\n{sql_statement}"

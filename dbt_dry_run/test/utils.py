@@ -45,6 +45,7 @@ class SimpleNode(BaseModel):
             root_path=self.root_path,
             columns=dict(),
             meta=self.meta,
+            tags=[],
         )
 
 

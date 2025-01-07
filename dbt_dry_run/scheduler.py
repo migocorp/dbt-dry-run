@@ -12,8 +12,16 @@ class ManifestScheduler:
     SNAPSHOT = "snapshot"
     SOURCE = "source"
     TEST = "test"
-    RUNNABLE_RESOURCE_TYPE = (MODEL)
-    RUNNABLE_MATERIAL = ("view", "table", "incremental", "seed", "snapshot", "test", "model")
+    RUNNABLE_RESOURCE_TYPE = MODEL
+    RUNNABLE_MATERIAL = (
+        "view",
+        "table",
+        "incremental",
+        "seed",
+        "snapshot",
+        "test",
+        "model",
+    )
 
     def __init__(self, manifest: Manifest, tags: Optional[str] = None):
         self._manifest = manifest
@@ -38,8 +46,8 @@ class ManifestScheduler:
                             filtered_nodes.append(key)
                             try:
                                 tags_checklist.remove(tag)
-                            except:
-                                pass # tags already remove from check list
+                            except Exception:
+                                pass  # tags already remove from check list
             if tags_checklist == []:
                 return set(filtered_nodes)
             else:
