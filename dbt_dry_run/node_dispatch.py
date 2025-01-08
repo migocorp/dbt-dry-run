@@ -1,14 +1,16 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Dict, Optional, Type
 
 from dbt_dry_run.models.manifest import Node
 from dbt_dry_run.node_runner import NodeRunner
+from dbt_dry_run.node_runner.function_runner import FunctionRunner
 from dbt_dry_run.node_runner.incremental_runner import IncrementalRunner
 from dbt_dry_run.node_runner.model_runner import ModelRunner
 from dbt_dry_run.node_runner.node_test_runner import NodeTestRunner
 from dbt_dry_run.node_runner.seed_runner import SeedRunner
 from dbt_dry_run.node_runner.snapshot_runner import SnapshotRunner
 from dbt_dry_run.node_runner.source_runner import SourceRunner
+from dbt_dry_run.node_runner.table_function_runner import TableFunctionRunner
 from dbt_dry_run.node_runner.table_runner import TableRunner
 from dbt_dry_run.node_runner.view_runner import ViewRunner
 from dbt_dry_run.results import DryRunResult
@@ -25,6 +27,8 @@ RUNNERS: Dict[RunnerKey, Type[NodeRunner]] = {
     RunnerKey("model", "table"): TableRunner,
     RunnerKey("model", "view"): ViewRunner,
     RunnerKey("model", "model"): ModelRunner,
+    RunnerKey("model", "function"): FunctionRunner,
+    RunnerKey("model", "table_function"): TableFunctionRunner,
     RunnerKey("test", "test"): NodeTestRunner,
     RunnerKey("snapshot", "snapshot"): SnapshotRunner,
     RunnerKey("seed", "seed"): SeedRunner,

@@ -21,6 +21,8 @@ class ManifestScheduler:
         "snapshot",
         "test",
         "model",
+        "function",
+        "table_function",
     )
 
     def __init__(self, manifest: Manifest, tags: Optional[str] = None):

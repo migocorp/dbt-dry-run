@@ -83,13 +83,60 @@ def get_sql_literal_from_table(table: Table) -> str:
     return select_literal
 
 
+def get_sql_literal_from_table_function_field(field: TableField) -> str:
+    is_repeated = field.mode == BigQueryFieldMode.REPEATED
+    is_complex = field.type_ in (BigQueryFieldType.RECORD, BigQueryFieldType.STRUCT)
+    if is_complex and field.fields:
+        complex_dummies = map(get_sql_literal_from_table_function_field, field.fields)
+        dummy_value = f"STRUCT({','.join(complex_dummies)})"
+    else:
+        dummy_value = get_example_value(field.type_)
+    if is_repeated:
+        dummy_value = f"[{dummy_value}]"
+
+    return dummy_value
+
+
+def get_sql_literal_from_table_function(node: Node) -> str:
+    params = node.config.params
+    literal_fields = ""
+    if params:
+        fields = []
+        for param in params:
+            name, data_type = param.split(" ")
+            if data_type not in BigQueryFieldType.__members__:
+                raise ValueError(
+                    f"Invalid params data type {data_type} for table function"
+                )
+            fields.append(
+                TableField(
+                    name=name,
+                    type=data_type,
+                    mode=BigQueryFieldMode.REQUIRED,
+                    description=None,
+                )
+            )
+
+        literal_fields = ",".join(
+            map(get_sql_literal_from_table_function_field, fields)
+        )
+    return f"`{node.database}.{node.db_schema}.{node.alias}`({literal_fields})"
+
+
 def replace_upstream_sql(node_sql: str, node: Node, table: Table) -> str:
     upstream_table_ref = node.to_table_ref_literal()
-    regex = re.compile(
-        rf"((?:from|join)(?:\s--.*)?[\r\n\s]*)({upstream_table_ref})",
-        flags=re.IGNORECASE | re.MULTILINE,
-    )
-    select_literal = get_sql_literal_from_table(table)
+    if node.config.materialized == "table_function":
+        regex = re.compile(
+            rf"((?:from|join)(?:\s--.*)?[\r\n\s]*)({upstream_table_ref}\s*\(.*?\))",
+            flags=re.IGNORECASE | re.MULTILINE,
+        )
+        select_literal = get_sql_literal_from_table_function(node)
+    else:
+        regex = re.compile(
+            rf"((?:from|join)(?:\s--.*)?[\r\n\s]*)({upstream_table_ref})",
+            flags=re.IGNORECASE | re.MULTILINE,
+        )
+        select_literal = get_sql_literal_from_table(table)
     new_node_sql = regex.sub(r"\1" + select_literal, node_sql)
     return new_node_sql
 
