@@ -22,6 +22,7 @@ def test_external_source_with_columns_but_no_dry_run_columns() -> None:
         },
         alias="s",
         external=ExternalConfig(location="location"),  # No dry_run_columns specified
+        tags=[],
     )
 
     mock_sql_runner = MagicMock()

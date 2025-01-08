@@ -1,4 +1,4 @@
-from itertools import chain
+import logging
 from typing import Dict, Iterator, List, Optional, Set
 
 from networkx import DiGraph, from_dict_of_lists, topological_generations
@@ -12,8 +12,16 @@ class ManifestScheduler:
     SNAPSHOT = "snapshot"
     SOURCE = "source"
     TEST = "test"
-    RUNNABLE_RESOURCE_TYPE = (MODEL)
-    RUNNABLE_MATERIAL = ("view", "table", "incremental", "seed", "snapshot", "test")
+    RUNNABLE_RESOURCE_TYPE = MODEL
+    RUNNABLE_MATERIAL = (
+        "view",
+        "table",
+        "incremental",
+        "seed",
+        "snapshot",
+        "test",
+        "model",
+    )
 
     def __init__(self, manifest: Manifest, tags: Optional[str] = None):
         self._manifest = manifest
@@ -38,12 +46,13 @@ class ManifestScheduler:
                             filtered_nodes.append(key)
                             try:
                                 tags_checklist.remove(tag)
-                            except:
-                                pass # tags already remove from check list
+                            except Exception:
+                                pass  # tags already remove from check list
             if tags_checklist == []:
                 return set(filtered_nodes)
             else:
-                raise ValueError(f"Unknown tags: {tags_checklist}")
+                logging.warning(f"Unknown tags: {tags_checklist}")
+                return set(filtered_nodes)
 
     def _get_runnable_keys(self) -> Set[str]:
         remaining_nodes = set(
