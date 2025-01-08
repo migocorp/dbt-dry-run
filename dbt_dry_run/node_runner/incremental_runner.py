@@ -109,8 +109,8 @@ def get_merge_sql(
                   {select_statement}
                 )
                 ON False
-                WHEN NOT MATCHED THEN 
-                INSERT ({values_csv}) 
+                WHEN NOT MATCHED THEN
+                INSERT ({values_csv})
                 VALUES ({values_csv})
             """
     )
@@ -119,7 +119,7 @@ def get_merge_sql(
 def sql_has_recursive_ctes(code: str) -> bool:
     code_tokens = code.lower().split()
     for index in range(0, len(code_tokens) - 1):
-        if code_tokens[index : index + 2] == ["with", "recursive"]:
+        if code_tokens[index: index + 2] == ["with", "recursive"]:
             return True
     return False
 
