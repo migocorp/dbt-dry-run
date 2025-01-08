@@ -1,4 +1,4 @@
-from itertools import chain
+import logging
 from typing import Dict, Iterator, List, Optional, Set
 
 from networkx import DiGraph, from_dict_of_lists, topological_generations
@@ -51,7 +51,8 @@ class ManifestScheduler:
             if tags_checklist == []:
                 return set(filtered_nodes)
             else:
-                raise ValueError(f"Unknown tags: {tags_checklist}")
+                logging.warning(f"Unknown tags: {tags_checklist}")
+                return set(filtered_nodes)
 
     def _get_runnable_keys(self) -> Set[str]:
         remaining_nodes = set(
