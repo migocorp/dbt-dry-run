@@ -6,9 +6,11 @@ import pytest
 from dbt_dry_run.literals import (
     enable_test_example_values,
     get_sql_literal_from_table,
+    get_sql_literal_from_table_function,
     replace_upstream_sql,
 )
 from dbt_dry_run.models import BigQueryFieldMode, BigQueryFieldType, Table, TableField
+from dbt_dry_run.models.manifest import Node, NodeConfig
 from dbt_dry_run.test.utils import SimpleNode
 
 enable_test_example_values(True)
@@ -16,6 +18,13 @@ enable_test_example_values(True)
 
 def assert_fields_result_in_literal(fields: List[TableField], expected: str) -> None:
     actual = get_sql_literal_from_table(Table(fields=fields))
+    assert (
+        actual == expected
+    ), f"SQL Literal:\n {actual} does not equal expected:\n {expected}"
+
+
+def assert_table_function_fields_result_in_literal(node: Node, expected: str) -> None:
+    actual = get_sql_literal_from_table_function(node)
     assert (
         actual == expected
     ), f"SQL Literal:\n {actual} does not equal expected:\n {expected}"
@@ -42,9 +51,31 @@ def test_single_field_integer_field() -> None:
     assert_fields_result_in_literal(fields, "(SELECT 1 as `foo`)")
 
 
+def test_single_table_function_field_integer_field() -> None:
+    node = SimpleNode(
+        unique_id="alias",
+        schema="schema",
+        depends_on=[],
+        table_config=NodeConfig(materialized="table_function", params=["foo INTEGER"]),
+    ).to_node()
+    assert_table_function_fields_result_in_literal(node, "`my_db.schema.alias`(1)")
+
+
 def test_single_field_interval_field() -> None:
     fields = [TableField(name="foo", mode=BigQueryFieldMode.NULLABLE, type="INTERVAL")]
     assert_fields_result_in_literal(fields, "(SELECT MAKE_INTERVAL(1) as `foo`)")
+
+
+def test_single_table_function_field_interval_field() -> None:
+    node = SimpleNode(
+        unique_id="alias",
+        schema="schema",
+        depends_on=[],
+        table_config=NodeConfig(materialized="table_function", params=["foo INTERVAL"]),
+    ).to_node()
+    assert_table_function_fields_result_in_literal(
+        node, "`my_db.schema.alias`(MAKE_INTERVAL(1))"
+    )
 
 
 def test_repeated_field() -> None:
@@ -61,6 +92,19 @@ def test_complex_field() -> None:
         )
     ]
     assert_fields_result_in_literal(fields, "(SELECT STRUCT('foo' as `bar`) as `foo`)")
+
+
+def test_complex_table_function_field() -> None:
+    node = SimpleNode(
+        unique_id="alias",
+        schema="schema",
+        depends_on=[],
+        table_config=NodeConfig(
+            materialized="table_function", params=["foo STRUCT<bar STRING>"]
+        ),
+    ).to_node()
+    with pytest.raises(ValueError):
+        get_sql_literal_from_table_function(node)
 
 
 def test_recursive_complex_field() -> None:
@@ -110,6 +154,28 @@ def test_replace_upstream_sql_replaces_from() -> None:
         == """
     SELECT foo
     FROM (SELECT 'foo' as `foo`)
+    """
+    )
+
+
+def test_replace_upstream_sql_replaces_from_with_table_function() -> None:
+    node = SimpleNode(
+        unique_id="A",
+        depends_on=[],
+        table_config=NodeConfig(materialized="table_function", params=["foo STRING"]),
+    ).to_node()
+    original_sql = f"""
+    SELECT foo
+    FROM {node.to_table_ref_literal()}(foo)
+    """
+    table = Table(fields=[TableField(name="foo", type=BigQueryFieldType.STRING)])
+    new_sql = replace_upstream_sql(original_sql, node, table)
+
+    assert (
+        new_sql
+        == """
+    SELECT foo
+    FROM `my_db.my_schema.A`('foo')
     """
     )
 
